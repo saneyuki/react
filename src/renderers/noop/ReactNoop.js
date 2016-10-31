@@ -210,6 +210,10 @@ var ReactNoop = {
     NoopRenderer.performWithPriority(AnimationPriority, fn);
   },
 
+  batchedUpdates: NoopRenderer.batchedUpdates,
+
+  syncUpdates: NoopRenderer.syncUpdates,
+
   // Logs the current state of the tree.
   dumpTree() {
     if (!root) {
