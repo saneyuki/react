@@ -12,10 +12,10 @@
 
 'use strict';
 
-import type { ReactYield } from 'ReactCoroutine';
-import type { Fiber } from 'ReactFiber';
+import { ReactYield } from './isomorphic/ReactCoroutine';
+import { Fiber } from './ReactFiber';
 
-var { createFiberFromElementType } = require('ReactFiber');
+var { createFiberFromElementType } = require('./ReactFiber');
 
 export type ReifiedYield = { continuation: Fiber, props: Object };
 

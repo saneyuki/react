@@ -12,20 +12,20 @@
 
 'use strict';
 
-import type { Fiber } from 'ReactFiber';
+import { Fiber } from './ReactFiber';
 
-var ReactInstanceMap = require('ReactInstanceMap');
+var ReactInstanceMap = require('./ReactInstanceMap');
 
 var {
   HostContainer,
   HostComponent,
   HostText,
-} = require('ReactTypeOfWork');
+} = require('./ReactTypeOfWork');
 
 var {
   NoEffect,
   Placement,
-} = require('ReactTypeOfSideEffect');
+} = require('./ReactTypeOfSideEffect');
 
 function isFiberMounted(fiber : Fiber) : boolean {
   let node = fiber;

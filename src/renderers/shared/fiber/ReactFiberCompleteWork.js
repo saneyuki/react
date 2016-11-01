@@ -12,14 +12,14 @@
 
 'use strict';
 
-import type { ReactCoroutine } from 'ReactCoroutine';
-import type { Fiber } from 'ReactFiber';
-import type { HostConfig } from 'ReactFiberReconciler';
-import type { ReifiedYield } from 'ReactReifiedYield';
+import { ReactCoroutine } from './isomorphic/ReactCoroutine';
+import { Fiber } from './ReactFiber';
+import { HostConfig } from './ReactFiberReconciler';
+import { ReifiedYield } from './ReactReifiedYield';
 
-var { reconcileChildFibers } = require('ReactChildFiber');
-var ReactTypeOfWork = require('ReactTypeOfWork');
-var ReactTypeOfSideEffect = require('ReactTypeOfSideEffect');
+var { reconcileChildFibers } = require('./ReactChildFiber');
+var ReactTypeOfWork = require('./ReactTypeOfWork');
+var ReactTypeOfSideEffect = require('./ReactTypeOfSideEffect');
 var {
   IndeterminateComponent,
   FunctionalComponent,

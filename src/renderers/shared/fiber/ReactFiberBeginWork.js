@@ -12,19 +12,19 @@
 
 'use strict';
 
-import type { ReactCoroutine } from 'ReactCoroutine';
-import type { Fiber } from 'ReactFiber';
-import type { HostConfig } from 'ReactFiberReconciler';
-import type { PriorityLevel } from 'ReactPriorityLevel';
-import ReactCurrentOwner from 'ReactCurrentOwner';
+import { ReactCoroutine } from './isomorphic/ReactCoroutine';
+import { Fiber } from './ReactFiber';
+import { HostConfig } from './ReactFiberReconciler';
+import { PriorityLevel } from './ReactPriorityLevel';
+import ReactCurrentOwner from './ReactCurrentOwner';
 
 var {
   mountChildFibersInPlace,
   reconcileChildFibers,
   reconcileChildFibersInPlace,
   cloneChildFibers,
-} = require('ReactChildFiber');
-var ReactTypeOfWork = require('ReactTypeOfWork');
+} = require('./ReactChildFiber');
+var ReactTypeOfWork = require('./ReactTypeOfWork');
 var {
   IndeterminateComponent,
   FunctionalComponent,
@@ -40,11 +40,11 @@ var {
 var {
   NoWork,
   OffscreenPriority,
-} = require('ReactPriorityLevel');
+} = require('./ReactPriorityLevel');
 var {
   Placement,
-} = require('ReactTypeOfSideEffect');
-var ReactFiberClassComponent = require('ReactFiberClassComponent');
+} = require('./ReactTypeOfSideEffect');
+var ReactFiberClassComponent = require('./ReactFiberClassComponent');
 
 module.exports = function<T, P, I, TI, C>(
   config : HostConfig<T, P, I, TI, C>,

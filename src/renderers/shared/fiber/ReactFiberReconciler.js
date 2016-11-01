@@ -12,21 +12,21 @@
 
 'use strict';
 
-import type { Fiber } from 'ReactFiber';
-import type { FiberRoot } from 'ReactFiberRoot';
-import type { TypeOfWork } from 'ReactTypeOfWork';
-import type { PriorityLevel } from 'ReactPriorityLevel';
+import { Fiber } from './ReactFiber';
+import { FiberRoot } from './ReactFiberRoot';
+import { TypeOfWork } from './ReactTypeOfWork';
+import { PriorityLevel } from './ReactPriorityLevel';
 
-var { createFiberRoot } = require('ReactFiberRoot');
-var ReactFiberScheduler = require('ReactFiberScheduler');
+var { createFiberRoot } = require('./ReactFiberRoot');
+var ReactFiberScheduler = require('./ReactFiberScheduler');
 
-var { createUpdateQueue, addCallbackToQueue } = require('ReactFiberUpdateQueue');
+var { createUpdateQueue, addCallbackToQueue } = require('./ReactFiberUpdateQueue');
 
 if (__DEV__) {
-  var ReactFiberInstrumentation = require('ReactFiberInstrumentation');
+  var ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
 }
 
-var { findCurrentHostFiber } = require('ReactFiberTreeReflection');
+var { findCurrentHostFiber } = require('./ReactFiberTreeReflection');
 
 type Deadline = {
   timeRemaining : () => number

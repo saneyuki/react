@@ -12,11 +12,11 @@
 
 'use strict';
 
-import type { Fiber } from 'ReactFiber';
+import { Fiber } from './ReactFiber';
 
 var {
   ClassComponent,
-} = require('ReactTypeOfWork');
+} = require('./ReactTypeOfWork');
 
 export type TrappedError = {
   boundary: Fiber | null,

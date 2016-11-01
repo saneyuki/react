@@ -12,21 +12,21 @@
 
 'use strict';
 
-import type { ReactCoroutine, ReactYield } from 'ReactCoroutine';
-import type { Fiber } from 'ReactFiber';
-import type { PriorityLevel } from 'ReactPriorityLevel';
+import { ReactCoroutine, ReactYield } from './isomorphic/ReactCoroutine';
+import { Fiber } from './ReactFiber';
+import { PriorityLevel } from './ReactPriorityLevel';
 
 var REACT_ELEMENT_TYPE = require('ReactElementSymbol');
 var {
   REACT_COROUTINE_TYPE,
   REACT_YIELD_TYPE,
-} = require('ReactCoroutine');
+} = require('./isomorphic/ReactCoroutine');
 
-var ReactFiber = require('ReactFiber');
-var ReactPriorityLevel = require('ReactPriorityLevel');
-var ReactReifiedYield = require('ReactReifiedYield');
-var ReactTypeOfSideEffect = require('ReactTypeOfSideEffect');
-var ReactTypeOfWork = require('ReactTypeOfWork');
+var ReactFiber = require('./ReactFiber');
+var ReactPriorityLevel = require('./ReactPriorityLevel');
+var ReactReifiedYield = require('./ReactReifiedYield');
+var ReactTypeOfSideEffect = require('./ReactTypeOfSideEffect');
+var ReactTypeOfWork = require('./ReactTypeOfWork');
 
 var emptyObject = require('emptyObject');
 var getIteratorFn = require('getIteratorFn');

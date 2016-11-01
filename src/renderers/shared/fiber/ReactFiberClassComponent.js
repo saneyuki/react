@@ -12,19 +12,19 @@
 
 'use strict';
 
-import type { Fiber } from 'ReactFiber';
-import type { PriorityLevel } from 'ReactPriorityLevel';
-import type { UpdateQueue } from 'ReactFiberUpdateQueue';
+import { Fiber } from './ReactFiber';
+import { PriorityLevel } from './ReactPriorityLevel';
+import { UpdateQueue } from './ReactFiberUpdateQueue';
 
-var { LowPriority } = require('ReactPriorityLevel');
+var { LowPriority } = require('./ReactPriorityLevel');
 var {
   createUpdateQueue,
   addToQueue,
   addCallbackToQueue,
   mergeUpdateQueue,
-} = require('ReactFiberUpdateQueue');
-var { isMounted } = require('ReactFiberTreeReflection');
-var ReactInstanceMap = require('ReactInstanceMap');
+} = require('./ReactFiberUpdateQueue');
+var { isMounted } = require('./ReactFiberTreeReflection');
+var ReactInstanceMap = require('./ReactInstanceMap');
 var shallowEqual = require('shallowEqual');
 
 module.exports = function(scheduleUpdate : (fiber: Fiber, priorityLevel : PriorityLevel) => void) {

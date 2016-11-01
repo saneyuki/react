@@ -12,7 +12,7 @@
 
 'use strict';
 
-import type { ReactCoroutine, ReactYield } from 'ReactCoroutine';
+import { ReactCoroutine, ReactYield } from './ReactCoroutine';
 
 export type ReactNode = ReactElement<any> | ReactCoroutine | ReactYield | ReactText | ReactFragment;
 

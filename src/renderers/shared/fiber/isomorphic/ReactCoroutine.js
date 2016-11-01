@@ -12,7 +12,7 @@
 
 'use strict';
 
-import type { ReactNodeList } from 'ReactTypes';
+import { ReactNodeList } from './ReactTypes';
 
 // The Symbol used to tag the special React types. If there is no native Symbol
 // nor polyfill, then a plain number is used for performance.

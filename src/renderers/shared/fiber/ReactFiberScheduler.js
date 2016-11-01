@@ -12,26 +12,26 @@
 
 'use strict';
 
-import type { TrappedError } from 'ReactFiberErrorBoundary';
-import type { Fiber } from 'ReactFiber';
-import type { FiberRoot } from 'ReactFiberRoot';
-import type { HostConfig } from 'ReactFiberReconciler';
-import type { PriorityLevel } from 'ReactPriorityLevel';
+import { TrappedError } from './ReactFiberErrorBoundary';
+import { Fiber } from './ReactFiber';
+import { FiberRoot } from './ReactFiberRoot';
+import { HostConfig } from './ReactFiberReconciler';
+import { PriorityLevel } from './ReactPriorityLevel';
 
-var ReactFiberBeginWork = require('ReactFiberBeginWork');
-var ReactFiberCompleteWork = require('ReactFiberCompleteWork');
-var ReactFiberCommitWork = require('ReactFiberCommitWork');
-var ReactCurrentOwner = require('ReactCurrentOwner');
+var ReactFiberBeginWork = require('./ReactFiberBeginWork');
+var ReactFiberCompleteWork = require('./ReactFiberCompleteWork');
+var ReactFiberCommitWork = require('./ReactFiberCommitWork');
+var ReactCurrentOwner = require('./ReactCurrentOwner');
 
-var { cloneFiber } = require('ReactFiber');
-var { trapError, acknowledgeErrorInBoundary } = require('ReactFiberErrorBoundary');
+var { cloneFiber } = require('./ReactFiber');
+var { trapError, acknowledgeErrorInBoundary } = require('./ReactFiberErrorBoundary');
 
 var {
   NoWork,
   LowPriority,
   AnimationPriority,
   SynchronousPriority,
-} = require('ReactPriorityLevel');
+} = require('./ReactPriorityLevel');
 
 var {
   NoEffect,
@@ -39,14 +39,14 @@ var {
   Update,
   PlacementAndUpdate,
   Deletion,
-} = require('ReactTypeOfSideEffect');
+} = require('./ReactTypeOfSideEffect');
 
 var {
   HostContainer,
-} = require('ReactTypeOfWork');
+} = require('./ReactTypeOfWork');
 
 if (__DEV__) {
-  var ReactFiberInstrumentation = require('ReactFiberInstrumentation');
+  var ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
 }
 
 var timeHeuristicForUnitOfWork = 1;

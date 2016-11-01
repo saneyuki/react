@@ -12,10 +12,10 @@
 
 'use strict';
 
-import type { Fiber } from 'ReactFiber';
-import type { UpdateQueue } from 'ReactFiberUpdateQueue';
+import { Fiber } from './ReactFiber';
+import { UpdateQueue } from './ReactFiberUpdateQueue';
 
-const { createHostContainerFiber } = require('ReactFiber');
+const { createHostContainerFiber } = require('./ReactFiber');
 
 export type FiberRoot = {
   // Any additional information from the host associated with this root.

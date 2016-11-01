@@ -12,25 +12,25 @@
 
 'use strict';
 
-import type { TrappedError } from 'ReactFiberErrorBoundary';
-import type { Fiber } from 'ReactFiber';
-import type { FiberRoot } from 'ReactFiberRoot';
-import type { HostConfig } from 'ReactFiberReconciler';
+import { TrappedError } from './ReactFiberErrorBoundary';
+import { Fiber } from './ReactFiber';
+import { FiberRoot } from './ReactFiberRoot';
+import { HostConfig } from './ReactFiberReconciler';
 
-var ReactTypeOfWork = require('ReactTypeOfWork');
+var ReactTypeOfWork = require('./ReactTypeOfWork');
 var {
   ClassComponent,
   HostContainer,
   HostComponent,
   HostText,
 } = ReactTypeOfWork;
-var { trapError } = require('ReactFiberErrorBoundary');
-var { callCallbacks } = require('ReactFiberUpdateQueue');
+var { trapError } = require('./ReactFiberErrorBoundary');
+var { callCallbacks } = require('./ReactFiberUpdateQueue');
 
 var {
   Placement,
   PlacementAndUpdate,
-} = require('ReactTypeOfSideEffect');
+} = require('./ReactTypeOfSideEffect');
 
 module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
 

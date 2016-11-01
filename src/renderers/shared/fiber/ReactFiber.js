@@ -12,14 +12,14 @@
 
 'use strict';
 
-import type { ReactFragment } from 'ReactTypes';
-import type { ReactCoroutine, ReactYield } from 'ReactCoroutine';
-import type { TypeOfWork } from 'ReactTypeOfWork';
-import type { TypeOfSideEffect } from 'ReactTypeOfSideEffect';
-import type { PriorityLevel } from 'ReactPriorityLevel';
-import type { UpdateQueue } from 'ReactFiberUpdateQueue';
+import { ReactFragment } from './isomorphic/ReactTypes';
+import { ReactCoroutine, ReactYield } from 'R./isomorphic/eactCoroutine';
+import { TypeOfWork } from './ReactTypeOfWork';
+import { TypeOfSideEffect } from './ReactTypeOfSideEffect';
+import { PriorityLevel } from './ReactPriorityLevel';
+import { UpdateQueue } from './ReactFiberUpdateQueue';
 
-var ReactTypeOfWork = require('ReactTypeOfWork');
+var ReactTypeOfWork = require('./ReactTypeOfWork');
 var {
   IndeterminateComponent,
   ClassComponent,
@@ -33,11 +33,11 @@ var {
 
 var {
   NoWork,
-} = require('ReactPriorityLevel');
+} = require('./ReactPriorityLevel');
 
 var {
   NoEffect,
-} = require('ReactTypeOfSideEffect');
+} = require('./ReactTypeOfSideEffect');
 
 // A Fiber is work on a Component that needs to be done or was done. There can
 // be more than one per component.
