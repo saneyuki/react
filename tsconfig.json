@@ -1,0 +1,55 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "allowSyntheticDefaultImports": false,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        // "alwaysStrict": true,
+        "diagnostics": false,
+        "forceConsistentCasingInFileNames": true,
+        "importHelpers": false,
+        "jsx": "preserve",
+        "lib": [
+            "es2016",
+            "dom"
+        ],
+        "module": "es2015",
+        "moduleResolution": "node",
+        "newLine": "LF",
+        "noEmitHelpers": false, // see: https://github.com/Microsoft/TypeScript/issues/3364
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitUseStrict": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "outDir": "./__obj/",
+        "pretty": true,
+        "preserveConstEnums": true,
+        "removeComments": false,
+        "sourceMap": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": false,
+        "target": "es2017",
+        "types": [ // for d.ts which affects global environment.
+            "node"
+        ]
+    },
+
+    "include": [
+        "src/**/*"
+    ],
+
+    "exclude": [
+        ".git",
+        ".github",
+        "__grunt",
+        ".module-cache",
+        "build",
+        "defaults",
+        "node_modules",
+        "resource",
+        "tools"
+    ]
+}
