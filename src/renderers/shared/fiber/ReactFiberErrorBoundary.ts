@@ -13,10 +13,7 @@
 'use strict';
 
 import { Fiber } from './ReactFiber';
-
-var {
-  ClassComponent,
-} = require('./ReactTypeOfWork');
+import {ReactTypeOfWork} from './ReactTypeOfWork';
 
 export type TrappedError = {
   boundary: Fiber | null,
@@ -26,7 +23,7 @@ export type TrappedError = {
 function findClosestErrorBoundary(fiber : Fiber): Fiber | null {
   let maybeErrorBoundary = fiber.return;
   while (maybeErrorBoundary) {
-    if (maybeErrorBoundary.tag === ClassComponent) {
+    if (maybeErrorBoundary.tag === ReactTypeOfWork.ClassComponent) {
       const instance = maybeErrorBoundary.stateNode;
       if (typeof instance.unstable_handleError === 'function') {
         return maybeErrorBoundary;
@@ -37,17 +34,14 @@ function findClosestErrorBoundary(fiber : Fiber): Fiber | null {
   return null;
 }
 
-function trapError(fiber : Fiber, error : any) : TrappedError {
+export function trapError(fiber : Fiber, error : any) : TrappedError {
   return {
     boundary: findClosestErrorBoundary(fiber),
     error,
   };
 }
 
-function acknowledgeErrorInBoundary(boundary : Fiber, error : any) {
+export function acknowledgeErrorInBoundary(boundary : Fiber, error : any) {
   const instance = boundary.stateNode;
   instance.unstable_handleError(error);
 }
-
-exports.trapError = trapError;
-exports.acknowledgeErrorInBoundary = acknowledgeErrorInBoundary;

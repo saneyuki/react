@@ -12,10 +12,11 @@
 
 'use strict';
 
-import { TrappedError } from './ReactFiberErrorBoundary';
+import { TrappedError, trapError } from './ReactFiberErrorBoundary';
 import { Fiber } from './ReactFiber';
 import { FiberRoot } from './ReactFiberRoot';
 import { HostConfig } from './ReactFiberReconciler';
+import { callCallbacks } from './ReactFiberUpdateQueue';
 
 var ReactTypeOfWork = require('./ReactTypeOfWork');
 var {
@@ -24,16 +25,12 @@ var {
   HostComponent,
   HostText,
 } = ReactTypeOfWork;
-var { trapError } = require('./ReactFiberErrorBoundary');
-var { callCallbacks } = require('./ReactFiberUpdateQueue');
 
-var {
-  Placement,
-  PlacementAndUpdate,
-} = require('./ReactTypeOfSideEffect');
+import {
+  ReactTypeOfSideEffect,
+} from './ReactTypeOfSideEffect';
 
-module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
-
+export default function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   const updateContainer = config.updateContainer;
   const commitUpdate = config.commitUpdate;
   const commitTextUpdate = config.commitTextUpdate;
@@ -49,7 +46,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function detachRefIfNeeded(current : ?Fiber, finishedWork : Fiber) {
+  function detachRefIfNeeded(current : Fiber | null, finishedWork : Fiber) {
     if (current) {
       const currentRef = current.ref;
       if (currentRef && currentRef !== finishedWork.ref) {
@@ -58,14 +55,14 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function attachRef(current : ?Fiber, finishedWork : Fiber, instance : any) {
+  function attachRef(current : Fiber | null, finishedWork : Fiber, instance : any) {
     const ref = finishedWork.ref;
     if (ref && (!current || current.ref !== ref)) {
       ref(instance);
     }
   }
 
-  function getHostParent(fiber : Fiber) : ?I {
+  function getHostParent(fiber : Fiber) : I | null {
     let parent = fiber.return;
     while (parent) {
       switch (parent.tag) {
@@ -81,7 +78,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     return null;
   }
 
-  function getHostSibling(fiber : Fiber) : ?I {
+  function getHostSibling(fiber : Fiber) : I | null {
     // We're going to search forward into the tree until we find a sibling host
     // node. Unfortunately, if multiple insertions are done in a row we have to
     // search past them. This leads to exponential search for the next sibling.
@@ -102,8 +99,8 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         // If it is not host node and, we might have a host node inside it.
         // Try to search down until we find one.
         // TODO: For coroutines, this will have to search the stateNode.
-        if (node.effectTag === Placement ||
-          node.effectTag === PlacementAndUpdate) {
+        if (node.effectTag === ReactTypeOfSideEffect.Placement ||
+          node.effectTag === ReactTypeOfSideEffect.PlacementAndUpdate) {
           // If we don't have a child, try the siblings instead.
           continue siblings;
         }
@@ -114,8 +111,8 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         }
       }
       // Check if this host node is stable or about to be placed.
-      if (node.effectTag !== Placement &&
-        node.effectTag !== PlacementAndUpdate) {
+      if (node.effectTag !== ReactTypeOfSideEffect.Placement &&
+        node.effectTag !== ReactTypeOfSideEffect.PlacementAndUpdate) {
         // Found it!
         return node.stateNode;
       }
@@ -170,7 +167,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     while (true) {
       const error = commitUnmount(node);
       if (error) {
-        trappedErrors = trappedErrors || [];
+        trappedErrors = trappedErrors || [] as any[];
         trappedErrors.push(error);
       }
       if (node.child) {
@@ -192,7 +189,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     return trappedErrors;
   }
 
-  function unmountHostComponents(parent, current): Array<TrappedError> | null {
+  function unmountHostComponents(parent: I, current): Array<TrappedError> | null {
     // Since errors are rare, we allocate this array on demand.
     let trappedErrors = null;
 
@@ -284,7 +281,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function commitWork(current : ?Fiber, finishedWork : Fiber) : void {
+  function commitWork(current : Fiber | null, finishedWork : Fiber) : void {
     switch (finishedWork.tag) {
       case ClassComponent: {
         detachRefIfNeeded(current, finishedWork);
@@ -324,7 +321,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function commitLifeCycles(current : ?Fiber, finishedWork : Fiber) : TrappedError | null {
+  function commitLifeCycles(current : Fiber | null, finishedWork : Fiber) : TrappedError | null {
     switch (finishedWork.tag) {
       case ClassComponent: {
         const instance = finishedWork.stateNode;

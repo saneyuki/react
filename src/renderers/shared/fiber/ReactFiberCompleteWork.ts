@@ -56,13 +56,13 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     returnFiber.memoizedProps = returnFiber.pendingProps;
   }
 
-  function recursivelyFillYields(yields, output : ?Fiber | ?ReifiedYield) {
+  function recursivelyFillYields(yields, output : Fiber | ReifiedYield | null) {
     if (!output) {
       // Ignore nulls etc.
     } else if (output.tag !== undefined) { // TODO: Fix this fragile duck test.
       // Detect if this is a fiber, if so it is a fragment result.
       // $FlowFixMe: Refinement issue.
-      var item = (output : Fiber);
+      var item = (output as Fiber);
       do {
         recursivelyFillYields(yields, item.output);
         item = item.sibling;
@@ -73,8 +73,8 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function moveCoroutineToHandlerPhase(current : ?Fiber, workInProgress : Fiber) {
-    var coroutine = (workInProgress.pendingProps : ?ReactCoroutine);
+  function moveCoroutineToHandlerPhase(current : Fiber | null, workInProgress : Fiber) {
+    var coroutine = workInProgress.pendingProps as (ReactCoroutine | null);
     if (!coroutine) {
       throw new Error('Should be resolved by now');
     }
@@ -112,7 +112,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     return workInProgress.stateNode;
   }
 
-  function completeWork(current : ?Fiber, workInProgress : Fiber) : ?Fiber {
+  function completeWork(current : Fiber | null, workInProgress : Fiber): Fiber | null {
     switch (workInProgress.tag) {
       case FunctionalComponent:
         transferOutput(workInProgress.child, workInProgress);
@@ -177,7 +177,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
             }
           }
           const child = workInProgress.child;
-          const children = (child && !child.sibling) ? (child.output : ?Fiber | I) : child;
+          const children = (child && !child.sibling) ? (child.output as Fiber | null | I) : child;
           const instance = createInstance(workInProgress.type, newProps, children);
           // TODO: This seems like unnecessary duplication.
           workInProgress.stateNode = instance;

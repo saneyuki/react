@@ -23,7 +23,6 @@ import {
 } from './isomorphic/ReactCoroutine';
 
 import * as ReactFiber from './ReactFiber';
-import {ReactPriorityLevel} from './ReactPriorityLevel';
 import * as ReactReifiedYield from './ReactReifiedYield';
 import {ReactTypeOfSideEffect} from './ReactTypeOfSideEffect';
 import {ReactTypeOfWork} from './ReactTypeOfWork';
@@ -180,7 +179,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
       const oldIndex = current.index;
       if (oldIndex < lastPlacedIndex) {
         // This is a move.
-        newFiber.effectTag = Placement;
+        newFiber.effectTag = ReactTypeOfSideEffect.Placement;
         return lastPlacedIndex;
       } else {
         // This item can stay in place.
@@ -188,7 +187,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
       }
     } else {
       // This is an insertion.
-      newFiber.effectTag = Placement;
+      newFiber.effectTag = ReactTypeOfSideEffect.Placement;
       return lastPlacedIndex;
     }
   }
@@ -197,14 +196,14 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
     // This is simpler for the single child case. We only need to do a
     // placement for inserting new children.
     if (shouldTrackSideEffects && !newFiber.alternate) {
-      newFiber.effectTag = Placement;
+      newFiber.effectTag = ReactTypeOfSideEffect.Placement;
     }
     return newFiber;
   }
 
   function updateTextNode(
     returnFiber : Fiber,
-    current : ?Fiber,
+    current : Fiber | null,
     textContent : string,
     priority : PriorityLevel
   ) {
@@ -224,7 +223,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
 
   function updateElement(
     returnFiber : Fiber,
-    current : ?Fiber,
+    current : Fiber | null,
     element : ReactElement<any>,
     priority : PriorityLevel
   ) : Fiber {
@@ -246,7 +245,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
 
   function updateCoroutine(
     returnFiber : Fiber,
-    current : ?Fiber,
+    current : Fiber | null,
     coroutine : ReactCoroutine,
     priority : PriorityLevel
   ) : Fiber {
@@ -267,7 +266,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
 
   function updateYield(
     returnFiber : Fiber,
-    current : ?Fiber,
+    current : Fiber | null,
     yieldNode : ReactYield,
     priority : PriorityLevel
   ) : Fiber {
@@ -315,7 +314,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
     returnFiber : Fiber,
     newChild : any,
     priority : PriorityLevel
-  ) : ?Fiber {
+  ) : Fiber | null {
     if (typeof newChild === 'string' || typeof newChild === 'number') {
       // Text nodes doesn't have keys. If the previous node is implicitly keyed
       // we can continue to replace it without aborting even if it is not a text
@@ -361,10 +360,10 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
 
   function updateSlot(
     returnFiber : Fiber,
-    oldFiber : ?Fiber,
+    oldFiber : Fiber | null,
     newChild : any,
     priority : PriorityLevel
-  ) : ?Fiber {
+  ) : Fiber | null {
     // Update the fiber if the keys match, otherwise return null.
 
     const key = oldFiber ? oldFiber.key : null;
@@ -489,8 +488,8 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
     // In this first iteration, we'll just live with hitting the bad case
     // (adding everything to a Map) in for every insert/move.
 
-    let resultingFirstChild : ?Fiber = null;
-    let previousNewFiber : ?Fiber = null;
+    let resultingFirstChild : Fiber | null = null;
+    let previousNewFiber : Fiber | null = null;
 
     let oldFiber = currentFirstChild;
     let lastPlacedIndex = 0;
@@ -614,10 +613,10 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
   }
 
   function reconcileChildrenIterator(
-    returnFiber : Fiber,
-    currentFirstChild : Fiber | null,
-    newChildren : Iterator<any>,
-    priority : PriorityLevel) : null {
+    _returnFiber : Fiber,
+    _currentFirstChild : Fiber | null,
+    _newChildren : Iterator<any>,
+    _priority : PriorityLevel) : null {
     // TODO: Copy everything from reconcileChildrenArray but use the iterator
     // instead.
     return null;
@@ -728,7 +727,7 @@ function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) 
       // TODO: If key === null and child.key === null, then this only applies to
       // the first item in the list.
       if (child.key === key) {
-        if (child.tag === YieldComponent) {
+        if (child.tag === ReactTypeOfWork.YieldComponent) {
           deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, priority);
           existing.output = createUpdatedReifiedYield(
@@ -872,7 +871,7 @@ export function cloneChildFibers(current : Fiber | null, workInProgress : Fiber)
   // If the children of the alternate fiber is a different set, then we don't
   // need to clone. We need to reset the return fiber though since we'll
   // traverse down into them.
-  let child = workInProgress.child;
+  let child: Fiber | null = workInProgress.child;
   while (child) {
     child.return = workInProgress;
     child = child.sibling;

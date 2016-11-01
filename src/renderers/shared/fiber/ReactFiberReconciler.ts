@@ -13,22 +13,21 @@
 'use strict';
 
 import { Fiber } from './ReactFiber';
-import { FiberRoot } from './ReactFiberRoot';
+import { FiberRoot, createFiberRoot } from './ReactFiberRoot';
 import { TypeOfWork } from './ReactTypeOfWork';
 import { PriorityLevel } from './ReactPriorityLevel';
 
-var { createFiberRoot } = require('./ReactFiberRoot');
-var ReactFiberScheduler = require('./ReactFiberScheduler');
+import ReactFiberScheduler from './ReactFiberScheduler';
 
-var { createUpdateQueue, addCallbackToQueue } = require('./ReactFiberUpdateQueue');
+import { createUpdateQueue, addCallbackToQueue } from './ReactFiberUpdateQueue';
 
 if (__DEV__) {
-  var ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
+  import ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
 }
 
-var { findCurrentHostFiber } = require('./ReactFiberTreeReflection');
+import { findCurrentHostFiber } from './ReactFiberTreeReflection';
 
-type Deadline = {
+export type Deadline = {
   timeRemaining : () => number
 };
 
@@ -63,8 +62,8 @@ export type HostConfig<T, P, I, TI, C> = {
 type OpaqueNode = Fiber;
 
 export type Reconciler<C, I, TI> = {
-  mountContainer(element : ReactElement<any>, containerInfo : C) : OpaqueNode,
-  updateContainer(element : ReactElement<any>, container : OpaqueNode) : void,
+  mountContainer(element : ReactElement<any>, containerInfo : C, callback: Function | null) : OpaqueNode,
+  updateContainer(element : ReactElement<any>, container : OpaqueNode, callback: Function | null) : void,
   unmountContainer(container : OpaqueNode) : void,
   performWithPriority(priorityLevel : PriorityLevel, fn : Function) : void,
 
@@ -75,13 +74,13 @@ export type Reconciler<C, I, TI> = {
   findHostInstance(component : ReactComponent<any, any, any>) : I | TI | null,
 };
 
-module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) : Reconciler<C, I, TI> {
+export default function ReactFiberReconciler<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>): Reconciler<C, I, TI> {
 
   var { scheduleWork, performWithPriority } = ReactFiberScheduler(config);
 
   return {
 
-    mountContainer(element : ReactElement<any>, containerInfo : C, callback: ?Function) : OpaqueNode {
+    mountContainer(element : ReactElement<any>, containerInfo : C, callback: Function | null) : OpaqueNode {
       const root = createFiberRoot(containerInfo);
       const container = root.current;
       if (callback) {
@@ -106,9 +105,9 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) :
       return container;
     },
 
-    updateContainer(element : ReactElement<any>, container : OpaqueNode, callback: ?Function) : void {
+    updateContainer(element : ReactElement<any>, container : OpaqueNode, callback: Function | null) : void {
       // TODO: If this is a nested container, this won't be the root.
-      const root : FiberRoot = (container.stateNode : any);
+      const root : FiberRoot = (container.stateNode as any);
       if (callback) {
         const queue = root.callbackList ?
           root.callbackList :
@@ -128,7 +127,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) :
 
     unmountContainer(container : OpaqueNode) : void {
       // TODO: If this is a nested container, this won't be the root.
-      const root : FiberRoot = (container.stateNode : any);
+      const root : FiberRoot = (container.stateNode as any);
       // TODO: Use pending work/state instead of props.
       root.current.pendingProps = [];
 
@@ -142,7 +141,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) :
     performWithPriority,
 
     getPublicRootInstance(container : OpaqueNode) : (ReactComponent<any, any, any> | I | TI | null) {
-      const root : FiberRoot = (container.stateNode : any);
+      const root : FiberRoot = (container.stateNode as any);
       const containerFiber = root.current;
       if (!containerFiber.child) {
         return null;

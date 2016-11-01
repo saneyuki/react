@@ -12,14 +12,14 @@
 
 'use strict';
 
-import type { HostChildren } from 'ReactFiberReconciler';
+import { HostChildren } from '../../shared/fiber/ReactFiberReconciler';
 
 var ReactFiberReconciler = require('ReactFiberReconciler');
 var ReactDOMFeatureFlags = require('ReactDOMFeatureFlags');
 
 var warning = require('warning');
 
-type DOMContainerElement = Element & { _reactRootContainer: ?Object };
+type DOMContainerElement = Element & { _reactRootContainer: Object | null };
 
 type Container = Element;
 type Props = { className ?: string };
@@ -128,7 +128,7 @@ function warnAboutUnstableUse() {
 
 var ReactDOM = {
 
-  render(element : ReactElement<any>, container : DOMContainerElement, callback: ?Function) {
+  render(element : ReactElement<any>, container : DOMContainerElement, callback: Function | null) {
     warnAboutUnstableUse();
     let root;
 
@@ -151,7 +151,7 @@ var ReactDOM = {
     }
   },
 
-  findDOMNode(componentOrElement : Element | ?ReactComponent<any, any, any>) : null | Element | Text {
+  findDOMNode(componentOrElement : Element | ReactComponent<any, any, any> | null) : null | Element | Text {
     if (componentOrElement == null) {
       return null;
     }

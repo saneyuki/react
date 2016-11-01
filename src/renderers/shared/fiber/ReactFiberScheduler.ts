@@ -13,45 +13,28 @@
 'use strict';
 
 import { TrappedError } from './ReactFiberErrorBoundary';
-import { Fiber } from './ReactFiber';
+import { Fiber, cloneFiber } from './ReactFiber';
 import { FiberRoot } from './ReactFiberRoot';
-import { HostConfig } from './ReactFiberReconciler';
-import { PriorityLevel } from './ReactPriorityLevel';
+import { HostConfig, Deadline } from './ReactFiberReconciler';
+import { ReactPriorityLevel } from './ReactPriorityLevel';
 
-var ReactFiberBeginWork = require('./ReactFiberBeginWork');
-var ReactFiberCompleteWork = require('./ReactFiberCompleteWork');
-var ReactFiberCommitWork = require('./ReactFiberCommitWork');
-var ReactCurrentOwner = require('./ReactCurrentOwner');
+import ReactFiberBeginWork from './ReactFiberBeginWork';
+import ReactFiberCompleteWork from './ReactFiberCompleteWork';
+import ReactFiberCommitWork from './ReactFiberCommitWork';
+import ReactCurrentOwner from '../../../../isomorphic/classic/element/ReactCurrentOwner';
+import { trapError, acknowledgeErrorInBoundary } from './ReactFiberErrorBoundary';
 
-var { cloneFiber } = require('./ReactFiber');
-var { trapError, acknowledgeErrorInBoundary } = require('./ReactFiberErrorBoundary');
+import {ReactTypeOfSideEffect} from './ReactTypeOfSideEffect';
+import {ReactTypeOfWork} from './ReactTypeOfWork';
 
-var {
-  NoWork,
-  LowPriority,
-  AnimationPriority,
-  SynchronousPriority,
-} = require('./ReactPriorityLevel');
-
-var {
-  NoEffect,
-  Placement,
-  Update,
-  PlacementAndUpdate,
-  Deletion,
-} = require('./ReactTypeOfSideEffect');
-
-var {
-  HostContainer,
-} = require('./ReactTypeOfWork');
 
 if (__DEV__) {
-  var ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
+  import ReactFiberInstrumentation = require('./ReactFiberInstrumentation');
 }
 
 var timeHeuristicForUnitOfWork = 1;
 
-module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
+export default function ReactFiberScheduler<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   // Use a closure to circumvent the circular dependency between the scheduler
   // and ReactFiberBeginWork. Don't know if there's a better way to do this.
 
@@ -64,34 +47,34 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   const scheduleDeferredCallback = config.scheduleDeferredCallback;
 
   // The default priority to use for updates.
-  let defaultPriority : PriorityLevel = LowPriority;
+  let defaultPriority : ReactPriorityLevel = ReactPriorityLevel.LowPriority;
 
   // The next work in progress fiber that we're currently working on.
-  let nextUnitOfWork : ?Fiber = null;
-  let nextPriorityLevel : PriorityLevel = NoWork;
+  let nextUnitOfWork : Fiber | null = null;
+  let nextPriorityLevel : ReactPriorityLevel = ReactPriorityLevel.NoWork;
 
   // Linked list of roots with scheduled work on them.
-  let nextScheduledRoot : ?FiberRoot = null;
-  let lastScheduledRoot : ?FiberRoot = null;
+  let nextScheduledRoot: FiberRoot | null = null;
+  let lastScheduledRoot: FiberRoot | null = null;
 
   function findNextUnitOfWork() {
     // Clear out roots with no more work on them.
-    while (nextScheduledRoot && nextScheduledRoot.current.pendingWorkPriority === NoWork) {
+    while (nextScheduledRoot && nextScheduledRoot.current.pendingWorkPriority === ReactPriorityLevel.NoWork) {
       nextScheduledRoot.isScheduled = false;
       if (nextScheduledRoot === lastScheduledRoot) {
         nextScheduledRoot = null;
         lastScheduledRoot = null;
-        nextPriorityLevel = NoWork;
+        nextPriorityLevel = ReactPriorityLevel.NoWork;
         return null;
       }
       nextScheduledRoot = nextScheduledRoot.nextScheduledRoot;
     }
     let root = nextScheduledRoot;
     let highestPriorityRoot = null;
-    let highestPriorityLevel = NoWork;
+    let highestPriorityLevel = ReactPriorityLevel.NoWork;
     while (root) {
-      if (root.current.pendingWorkPriority !== NoWork && (
-          highestPriorityLevel === NoWork ||
+      if (root.current.pendingWorkPriority !== ReactPriorityLevel.NoWork && (
+          highestPriorityLevel === ReactPriorityLevel.NoWork ||
           highestPriorityLevel > root.current.pendingWorkPriority)) {
         highestPriorityLevel = root.current.pendingWorkPriority;
         highestPriorityRoot = root;
@@ -107,7 +90,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
       );
     }
 
-    nextPriorityLevel = NoWork;
+    nextPriorityLevel = ReactPriorityLevel.NoWork;
     return null;
   }
 
@@ -125,28 +108,28 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     let effectfulFiber = finishedWork.firstEffect;
     while (effectfulFiber) {
       switch (effectfulFiber.effectTag) {
-        case Placement: {
+        case ReactTypeOfSideEffect.Placement: {
           commitInsertion(effectfulFiber);
           // Clear the effect tag so that we know that this is inserted, before
           // any life-cycles like componentDidMount gets called.
-          effectfulFiber.effectTag = NoWork;
+          effectfulFiber.effectTag = ReactTypeOfSideEffect.NoEffect;
           break;
         }
-        case PlacementAndUpdate: {
+        case ReactTypeOfSideEffect.PlacementAndUpdate: {
           commitInsertion(effectfulFiber);
           const current = effectfulFiber.alternate;
           commitWork(current, effectfulFiber);
           // Clear the "placement" from effect tag so that we know that this is inserted, before
           // any life-cycles like componentDidMount gets called.
-          effectfulFiber.effectTag = Update;
+          effectfulFiber.effectTag = ReactTypeOfSideEffect.Update;
           break;
         }
-        case Update: {
+        case ReactTypeOfSideEffect.Update: {
           const current = effectfulFiber.alternate;
           commitWork(current, effectfulFiber);
           break;
         }
-        case Deletion: {
+        case ReactTypeOfSideEffect.Deletion: {
           // Deletion might cause an error in componentWillUnmount().
           // We will continue nevertheless and handle those later on.
           const trappedErrors = commitDeletion(effectfulFiber);
@@ -172,8 +155,8 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     // already been invoked.
     effectfulFiber = finishedWork.firstEffect;
     while (effectfulFiber) {
-      if (effectfulFiber.effectTag === Update ||
-          effectfulFiber.effectTag === PlacementAndUpdate) {
+      if (effectfulFiber.effectTag === ReactTypeOfSideEffect.Update ||
+          effectfulFiber.effectTag === ReactTypeOfSideEffect.PlacementAndUpdate) {
         const current = effectfulFiber.alternate;
         const trappedError = commitLifeCycles(current, effectfulFiber);
         if (trappedError) {
@@ -194,7 +177,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
 
     // Finally if the root itself had an effect, we perform that since it is not
     // part of the effect list.
-    if (finishedWork.effectTag !== NoEffect) {
+    if (finishedWork.effectTag !== ReactTypeOfSideEffect.NoEffect) {
       const current = finishedWork.alternate;
       commitWork(current, finishedWork);
       const trappedError = commitLifeCycles(current, finishedWork);
@@ -211,15 +194,15 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   }
 
   function resetWorkPriority(workInProgress : Fiber) {
-    let newPriority = NoWork;
+    let newPriority = ReactPriorityLevel.NoWork;
     // progressedChild is going to be the child set with the highest priority.
     // Either it is the same as child, or it just bailed out because it choose
     // not to do the work.
     let child = workInProgress.progressedChild;
     while (child) {
       // Ensure that remaining work priority bubbles up.
-      if (child.pendingWorkPriority !== NoWork &&
-          (newPriority === NoWork ||
+      if (child.pendingWorkPriority !== ReactPriorityLevel.NoWork &&
+          (newPriority === ReactPriorityLevel.NoWork ||
           newPriority > child.pendingWorkPriority)) {
         newPriority = child.pendingWorkPriority;
       }
@@ -228,7 +211,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     workInProgress.pendingWorkPriority = newPriority;
   }
 
-  function completeUnitOfWork(workInProgress : Fiber, ignoreUnmountingErrors : boolean) : ?Fiber {
+  function completeUnitOfWork(workInProgress : Fiber, ignoreUnmountingErrors : boolean): Fiber | null {
     while (true) {
       // The current, flushed, state of this fiber is the alternate.
       // Ideally nothing should rely on this, but relying on it here
@@ -266,7 +249,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         // to schedule our own side-effect on our own list because if end up
         // reusing children we'll schedule this effect onto itself since we're
         // at the end.
-        if (workInProgress.effectTag !== NoEffect) {
+        if (workInProgress.effectTag !== ReactTypeOfSideEffect.NoEffect) {
           if (returnFiber.lastEffect) {
             returnFiber.lastEffect.nextEffect = workInProgress;
           } else {
@@ -288,7 +271,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         continue;
       } else {
         // If we're at the root, there's no more work to do. We can flush it.
-        const root : FiberRoot = (workInProgress.stateNode : any);
+        const root : FiberRoot = (workInProgress.stateNode as any);
         if (root.current === workInProgress) {
           throw new Error(
             'Cannot commit the same tree as before. This is probably a bug ' +
@@ -314,7 +297,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function performUnitOfWork(workInProgress : Fiber, ignoreUnmountingErrors : boolean) : ?Fiber {
+  function performUnitOfWork(workInProgress : Fiber, ignoreUnmountingErrors : boolean) : Fiber | null {
     // The current, flushed, state of this fiber is the alternate.
     // Ideally nothing should rely on this, but relying on it here
     // means that we don't need an additional field on the work in
@@ -346,7 +329,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     return next;
   }
 
-  function performDeferredWorkUnsafe(deadline) {
+  function performDeferredWorkUnsafe(deadline: Deadline) {
     if (!nextUnitOfWork) {
       nextUnitOfWork = findNextUnitOfWork();
     }
@@ -364,7 +347,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function performDeferredWork(deadline) {
+  function performDeferredWork(deadline: Deadline) {
     try {
       performDeferredWorkUnsafe(deadline);
     } catch (error) {
@@ -381,7 +364,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function scheduleDeferredWork(root : FiberRoot, priority : PriorityLevel) {
+  function scheduleDeferredWork(root : FiberRoot, priority : ReactPriorityLevel) {
     // We must reset the current unit of work pointer so that we restart the
     // search from the root during the next tick, in case there is now higher
     // priority work somewhere earlier than before.
@@ -390,7 +373,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
 
     // Set the priority on the root, without deprioritizing
-    if (root.current.pendingWorkPriority === NoWork ||
+    if (root.current.pendingWorkPriority === ReactPriorityLevel.NoWork ||
         priority <= root.current.pendingWorkPriority) {
       root.current.pendingWorkPriority = priority;
     }
@@ -417,14 +400,14 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     // Always start from the root
     nextUnitOfWork = findNextUnitOfWork();
     while (nextUnitOfWork &&
-           nextPriorityLevel !== NoWork) {
+           nextPriorityLevel !== ReactPriorityLevel.NoWork) {
       nextUnitOfWork = performUnitOfWork(nextUnitOfWork, false);
       if (!nextUnitOfWork) {
         // Keep searching for animation work until there's no more left
         nextUnitOfWork = findNextUnitOfWork();
       }
       // Stop if the next unit of work is low priority
-      if (nextPriorityLevel > AnimationPriority) {
+      if (nextPriorityLevel > ReactPriorityLevel.AnimationPriority) {
         scheduleDeferredCallback(performDeferredWork);
         return;
       }
@@ -448,9 +431,9 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function scheduleAnimationWork(root: FiberRoot, priorityLevel : PriorityLevel) {
+  function scheduleAnimationWork(root: FiberRoot, priorityLevel: ReactPriorityLevel) {
     // Set the priority on the root, without deprioritizing
-    if (root.current.pendingWorkPriority === NoWork ||
+    if (root.current.pendingWorkPriority === ReactPriorityLevel.NoWork ||
         priorityLevel <= root.current.pendingWorkPriority) {
       root.current.pendingWorkPriority = priorityLevel;
     }
@@ -472,7 +455,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function scheduleErrorBoundaryWork(boundary : Fiber, priority) : FiberRoot {
+  function scheduleErrorBoundaryWork(boundary : Fiber, priority: ReactPriorityLevel): FiberRoot {
     let root = null;
     let fiber = boundary;
     while (fiber) {
@@ -481,10 +464,10 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         fiber.alternate.pendingWorkPriority = priority;
       }
       if (!fiber.return) {
-        if (fiber.tag === HostContainer) {
+        if (fiber.tag === ReactTypeOfWork.HostContainer) {
           // We found the root.
           // Remember it so we can update it.
-          root = ((fiber.stateNode : any) : FiberRoot);
+          root = ((fiber.stateNode as any) as FiberRoot);
           break;
         } else {
           throw new Error('Invalid root');
@@ -537,7 +520,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
         // FIXME: We only specify LowPriority here so that setState() calls from the error
         // boundaries are respected. Instead we should set default priority level or something
         // like this. Reconsider this piece when synchronous scheduling is in place.
-        const priority = LowPriority;
+        const priority = ReactPriorityLevel.LowPriority;
         const root = scheduleErrorBoundaryWork(boundary, priority);
         // This should use findNextUnitOfWork() when synchronous scheduling is implemented.
         let fiber = cloneFiber(root.current, priority);
@@ -571,35 +554,35 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
   }
 
   function scheduleWork(root : FiberRoot) {
-    if (defaultPriority === SynchronousPriority) {
+    if (defaultPriority === ReactPriorityLevel.SynchronousPriority) {
       throw new Error('Not implemented yet');
     }
 
-    if (defaultPriority === NoWork) {
+    if (defaultPriority === ReactPriorityLevel.NoWork) {
       return;
     }
-    if (defaultPriority > AnimationPriority) {
+    if (defaultPriority > ReactPriorityLevel.AnimationPriority) {
       scheduleDeferredWork(root, defaultPriority);
       return;
     }
     scheduleAnimationWork(root, defaultPriority);
   }
 
-  function scheduleUpdate(fiber: Fiber, priorityLevel : PriorityLevel): void {
+  function scheduleUpdate(fiber: Fiber, priorityLevel : ReactPriorityLevel): void {
     while (true) {
-      if (fiber.pendingWorkPriority === NoWork ||
+      if (fiber.pendingWorkPriority === ReactPriorityLevel.NoWork ||
           fiber.pendingWorkPriority >= priorityLevel) {
         fiber.pendingWorkPriority = priorityLevel;
       }
       if (fiber.alternate) {
-        if (fiber.alternate.pendingWorkPriority === NoWork ||
+        if (fiber.alternate.pendingWorkPriority === ReactPriorityLevel.NoWork ||
             fiber.alternate.pendingWorkPriority >= priorityLevel) {
           fiber.alternate.pendingWorkPriority = priorityLevel;
         }
       }
       if (!fiber.return) {
-        if (fiber.tag === HostContainer) {
-          const root : FiberRoot = (fiber.stateNode : any);
+        if (fiber.tag === ReactTypeOfWork.HostContainer) {
+          const root : FiberRoot = (fiber.stateNode as any);
           scheduleDeferredWork(root, priorityLevel);
           return;
         } else {
@@ -610,7 +593,7 @@ module.exports = function<T, P, I, TI, C>(config : HostConfig<T, P, I, TI, C>) {
     }
   }
 
-  function performWithPriority(priorityLevel : PriorityLevel, fn : Function) {
+  function performWithPriority(priorityLevel: ReactPriorityLevel, fn : Function) {
     const previousDefaultPriority = defaultPriority;
     defaultPriority = priorityLevel;
     try {

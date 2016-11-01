@@ -12,10 +12,8 @@
 
 'use strict';
 
-import { Fiber } from './ReactFiber';
+import { Fiber, createHostContainerFiber } from './ReactFiber';
 import { UpdateQueue } from './ReactFiberUpdateQueue';
-
-const { createHostContainerFiber } = require('./ReactFiber');
 
 export type FiberRoot = {
   // Any additional information from the host associated with this root.
@@ -25,12 +23,12 @@ export type FiberRoot = {
   // Determines if this root has already been added to the schedule for work.
   isScheduled: boolean,
   // The work schedule is a linked list.
-  nextScheduledRoot: ?FiberRoot,
+  nextScheduledRoot: FiberRoot | null,
   // Linked list of callbacks to call after updates are committed.
-  callbackList: ?UpdateQueue,
+  callbackList: UpdateQueue | null,
 };
 
-exports.createFiberRoot = function(containerInfo : any) : FiberRoot {
+export function createFiberRoot(containerInfo : any) : FiberRoot {
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
   const uninitializedFiber = createHostContainerFiber();
