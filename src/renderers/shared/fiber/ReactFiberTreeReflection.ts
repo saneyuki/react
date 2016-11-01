@@ -16,28 +16,25 @@ import { Fiber } from './ReactFiber';
 
 var ReactInstanceMap = require('./ReactInstanceMap');
 
-var {
-  HostContainer,
-  HostComponent,
-  HostText,
-} = require('./ReactTypeOfWork');
+import {
+  ReactTypeOfWork
+} from './ReactTypeOfWork';
 
-var {
-  NoEffect,
-  Placement,
-} = require('./ReactTypeOfSideEffect');
+import {
+  ReactTypeOfSideEffect,
+} from './ReactTypeOfSideEffect';
 
-function isFiberMounted(fiber : Fiber) : boolean {
+function isFiberMounted(fiber: Fiber): boolean {
   let node = fiber;
   if (!fiber.alternate) {
     // If there is no alternate, this might be a new tree that isn't inserted
     // yet. If it is, then it will have a pending insertion effect on it.
-    if ((node.effectTag & Placement) !== NoEffect) {
+    if ((node.effectTag & ReactTypeOfSideEffect.Placement) !== ReactTypeOfSideEffect.NoEffect) {
       return false;
     }
     while (node.return) {
       node = node.return;
-      if ((node.effectTag & Placement) !== NoEffect) {
+      if ((node.effectTag & ReactTypeOfSideEffect.Placement) !== ReactTypeOfSideEffect.NoEffect) {
         return false;
       }
     }
@@ -46,7 +43,7 @@ function isFiberMounted(fiber : Fiber) : boolean {
       node = node.return;
     }
   }
-  if (node.tag === HostContainer) {
+  if (node.tag === ReactTypeOfWork.HostContainer) {
     // TODO: Check if this was a nested HostContainer when used with
     // renderContainerIntoSubtree.
     return true;
@@ -55,15 +52,15 @@ function isFiberMounted(fiber : Fiber) : boolean {
   return false;
 }
 
-exports.isMounted = function(component : ReactComponent<any, any, any>) : boolean {
-  var fiber : ?Fiber = ReactInstanceMap.get(component);
+export function isMounted(component : ReactComponent<any, any, any>) : boolean {
+  var fiber: Fiber | null = ReactInstanceMap.get(component);
   if (!fiber) {
     return false;
   }
   return isFiberMounted(fiber);
 };
 
-exports.findCurrentHostFiber = function(component : ReactComponent<any, any, any>) : Fiber | null {
+export function findCurrentHostFiber(component : ReactComponent<any, any, any>) : Fiber | null {
   let parent = ReactInstanceMap.get(component);
   if (!parent) {
     return null;
@@ -79,7 +76,7 @@ exports.findCurrentHostFiber = function(component : ReactComponent<any, any, any
   // Next we'll drill down this component to find the first HostComponent/Text.
   let node : Fiber = parent;
   while (true) {
-    if ((node.effectTag & Placement) !== NoEffect || !node.return) {
+    if ((node.effectTag & ReactTypeOfSideEffect.Placement) !== ReactTypeOfSideEffect.NoEffect || !node.return) {
       // If any node along the way was deleted, or is an insertion, that means
       // that we're actually in a work in progress to update this component with
       // a different component. We need to look in the "current" fiber instead.
@@ -94,7 +91,7 @@ exports.findCurrentHostFiber = function(component : ReactComponent<any, any, any
       node = parent = parent.alternate;
       continue;
     }
-    if (node.tag === HostComponent || node.tag === HostText) {
+    if (node.tag === ReactTypeOfWork.HostComponent || node.tag === ReactTypeOfWork.HostText) {
       return node;
     } else if (node.child) {
       // TODO: Coroutines need to visit the stateNode.
@@ -113,4 +110,4 @@ exports.findCurrentHostFiber = function(component : ReactComponent<any, any, any
     node = node.sibling;
   }
   return null;
-};
+}

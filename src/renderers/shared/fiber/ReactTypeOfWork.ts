@@ -14,7 +14,7 @@
 
 export type TypeOfWork = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-module.exports = {
+export default {
   IndeterminateComponent: 0, // Before we know whether it is functional or class
   FunctionalComponent: 1,
   ClassComponent: 2,
@@ -25,4 +25,17 @@ module.exports = {
   CoroutineHandlerPhase: 7,
   YieldComponent: 8,
   Fragment: 9,
-};
+}
+
+export const enum ReactTypeOfWork {
+  IndeterminateComponent = 0, // Before we know whether it is functional or class
+  FunctionalComponent = 1,
+  ClassComponent = 2,
+  HostContainer = 3, // Root of a host tree. Could be nested inside another node.
+  HostComponent = 4,
+  HostText = 5,
+  CoroutineComponent = 6,
+  CoroutineHandlerPhase = 7,
+  YieldComponent = 8,
+  Fragment = 9,
+}

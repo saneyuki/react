@@ -17,16 +17,16 @@ import { Fiber } from './ReactFiber';
 import { PriorityLevel } from './ReactPriorityLevel';
 
 var REACT_ELEMENT_TYPE = require('ReactElementSymbol');
-var {
+import {
   REACT_COROUTINE_TYPE,
   REACT_YIELD_TYPE,
-} = require('./isomorphic/ReactCoroutine');
+} from './isomorphic/ReactCoroutine';
 
-var ReactFiber = require('./ReactFiber');
-var ReactPriorityLevel = require('./ReactPriorityLevel');
-var ReactReifiedYield = require('./ReactReifiedYield');
-var ReactTypeOfSideEffect = require('./ReactTypeOfSideEffect');
-var ReactTypeOfWork = require('./ReactTypeOfWork');
+import * as ReactFiber from './ReactFiber';
+import {ReactPriorityLevel} from './ReactPriorityLevel';
+import * as ReactReifiedYield from './ReactReifiedYield';
+import {ReactTypeOfSideEffect} from './ReactTypeOfSideEffect';
+import {ReactTypeOfWork} from './ReactTypeOfWork';
 
 var emptyObject = require('emptyObject');
 var getIteratorFn = require('getIteratorFn');
@@ -47,28 +47,11 @@ const {
 
 const isArray = Array.isArray;
 
-const {
-  ClassComponent,
-  HostText,
-  CoroutineComponent,
-  YieldComponent,
-  Fragment,
-} = ReactTypeOfWork;
-
-const {
-  NoWork,
-} = ReactPriorityLevel;
-
-const {
-  Placement,
-  Deletion,
-} = ReactTypeOfSideEffect;
-
-function transferRef(current: ?Fiber, workInProgress: Fiber, element: ReactElement<any>) {
+function transferRef(current: Fiber | null, workInProgress: Fiber, element: ReactElement<any>) {
   if (typeof element.ref === 'string') {
     if (element._owner) {
-      const ownerFiber : ?Fiber = (element._owner : any);
-      if (ownerFiber && ownerFiber.tag === ClassComponent) {
+      const ownerFiber : Fiber | null = element._owner as any;
+      if (ownerFiber && ownerFiber.tag === ReactTypeOfWork.ClassComponent) {
         const stringRef = element.ref;
         // Check if previous string ref matches new string ref
         if (current && current.ref && current.ref._stringRef === stringRef) {
@@ -76,10 +59,10 @@ function transferRef(current: ?Fiber, workInProgress: Fiber, element: ReactEleme
           return;
         }
         const inst = ownerFiber.stateNode;
-        const ref = function(value) {
+        const ref = function(value: any) {
           const refs = inst.refs === emptyObject ? (inst.refs = {}) : inst.refs;
           refs[stringRef] = value;
-        };
+        } as any;
         ref._stringRef = stringRef;
         workInProgress.ref = ref;
       }
@@ -93,7 +76,7 @@ function transferRef(current: ?Fiber, workInProgress: Fiber, element: ReactEleme
 // to be able to optimize each path individually by branching early. This needs
 // a compiler or we can do it manually. Helpers that don't need this branching
 // live outside of this function.
-function ChildReconciler(shouldClone, shouldTrackSideEffects) {
+function ChildReconciler(shouldClone: boolean, shouldTrackSideEffects: boolean) {
 
   function deleteChild(
     returnFiber : Fiber,
@@ -123,12 +106,12 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
           childToDelete;
     }
     childToDelete.nextEffect = null;
-    childToDelete.effectTag = Deletion;
+    childToDelete.effectTag = ReactTypeOfSideEffect.Deletion;
   }
 
   function deleteRemainingChildren(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber
+    currentFirstChild : Fiber | null
   ) : null {
     if (!shouldTrackSideEffects) {
       // Noop.
@@ -146,7 +129,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
   }
 
   function mapRemainingChildren(
-    returnFiber : Fiber,
+    _returnFiber : Fiber,
     currentFirstChild : Fiber
   ) : Map<string | number, Fiber> {
     // Add the remaining children to a temporary map so that we can find them by
@@ -154,7 +137,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
     // instead.
     const existingChildren : Map<string | number, Fiber> = new Map();
 
-    let existingChild = currentFirstChild;
+    let existingChild: Fiber | null = currentFirstChild;
     while (existingChild) {
       if (existingChild.key !== null) {
         existingChildren.set(existingChild.key, existingChild);
@@ -179,7 +162,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
       // we're reconciling at a lower priority that means that this was
       // down-prioritized.
       fiber.pendingWorkPriority = priority;
-      fiber.effectTag = NoWork;
+      fiber.effectTag = ReactTypeOfSideEffect.NoEffect;
       fiber.index = 0;
       fiber.sibling = null;
       return fiber;
@@ -225,7 +208,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
     textContent : string,
     priority : PriorityLevel
   ) {
-    if (current == null || current.tag !== HostText) {
+    if (current == null || current.tag !== ReactTypeOfWork.HostText) {
       // Insert
       const created = createFiberFromText(textContent, priority);
       created.return = returnFiber;
@@ -268,7 +251,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
     priority : PriorityLevel
   ) : Fiber {
     // TODO: Should this also compare handler to determine whether to reuse?
-    if (current == null || current.tag !== CoroutineComponent) {
+    if (current == null || current.tag !== ReactTypeOfWork.CoroutineComponent) {
       // Insert
       const created = createFiberFromCoroutine(coroutine, priority);
       created.return = returnFiber;
@@ -289,7 +272,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
     priority : PriorityLevel
   ) : Fiber {
     // TODO: Should this also compare continuation to determine whether to reuse?
-    if (current == null || current.tag !== YieldComponent) {
+    if (current == null || current.tag !== ReactTypeOfWork.YieldComponent) {
       // Insert
       const reifiedYield = createReifiedYield(yieldNode);
       const created = createFiberFromYield(yieldNode, priority);
@@ -310,11 +293,11 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function updateFragment(
     returnFiber : Fiber,
-    current : ?Fiber,
-    fragment : Iterable<*>,
+    current : Fiber | null,
+    fragment : Iterable<any>,
     priority : PriorityLevel
   ) : Fiber {
-    if (current == null || current.tag !== Fragment) {
+    if (current == null || current.tag !== ReactTypeOfWork.Fragment) {
       // Insert
       const created = createFiberFromFragment(fragment, priority);
       created.return = returnFiber;
@@ -442,7 +425,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
     newIdx : number,
     newChild : any,
     priority : PriorityLevel
-  ) : ?Fiber {
+  ) : Fiber | null {
 
     if (typeof newChild === 'string' || typeof newChild === 'number') {
       // Text nodes doesn't have keys, so we neither have to check the old nor
@@ -486,9 +469,9 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileChildrenArray(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
-    newChildren : Array<*>,
-    priority : PriorityLevel) : ?Fiber {
+    currentFirstChild : Fiber | null,
+    newChildren : Array<any>,
+    priority : PriorityLevel) : Fiber | null {
 
     // This algorithm can't optimize by searching from boths ends since we
     // don't have backpointers on fibers. I'm trying to see how far we can get
@@ -632,8 +615,8 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileChildrenIterator(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
-    newChildren : Iterator<*>,
+    currentFirstChild : Fiber | null,
+    newChildren : Iterator<any>,
     priority : PriorityLevel) : null {
     // TODO: Copy everything from reconcileChildrenArray but use the iterator
     // instead.
@@ -642,13 +625,13 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileSingleTextNode(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
+    currentFirstChild : Fiber | null,
     textContent : string,
     priority : PriorityLevel
   ) : Fiber {
     // There's no need to check for keys on text nodes since we don't have a
     // way to define them.
-    if (currentFirstChild && currentFirstChild.tag === HostText) {
+    if (currentFirstChild && currentFirstChild.tag === ReactTypeOfWork.HostText) {
       // We already have an existing node so let's just update it and delete
       // the rest.
       deleteRemainingChildren(returnFiber, currentFirstChild.sibling);
@@ -667,7 +650,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileSingleElement(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
+    currentFirstChild : Fiber | null,
     element : ReactElement<any>,
     priority : PriorityLevel
   ) : Fiber {
@@ -702,7 +685,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileSingleCoroutine(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
+    currentFirstChild : Fiber | null,
     coroutine : ReactCoroutine,
     priority : PriorityLevel
   ) : Fiber {
@@ -712,7 +695,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
       // TODO: If key === null and child.key === null, then this only applies to
       // the first item in the list.
       if (child.key === key) {
-        if (child.tag === CoroutineComponent) {
+        if (child.tag === ReactTypeOfWork.CoroutineComponent) {
           deleteRemainingChildren(returnFiber, child.sibling);
           const existing = useFiber(child, priority);
           existing.pendingProps = coroutine;
@@ -735,7 +718,7 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
 
   function reconcileSingleYield(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
+    currentFirstChild : Fiber | null,
     yieldNode : ReactYield,
     priority : PriorityLevel
   ) : Fiber {
@@ -776,10 +759,10 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
   // children and the parent.
   function reconcileChildFibers(
     returnFiber : Fiber,
-    currentFirstChild : ?Fiber,
+    currentFirstChild : Fiber | null,
     newChild : any,
     priority : PriorityLevel
-  ) : ?Fiber {
+  ) : Fiber | null {
     // This function is not recursive.
     // If the top level item is an array, we treat it as a set of children,
     // not as a fragment. Nested arrays on the other hand will be treated as
@@ -848,13 +831,13 @@ function ChildReconciler(shouldClone, shouldTrackSideEffects) {
   return reconcileChildFibers;
 }
 
-exports.reconcileChildFibers = ChildReconciler(true, true);
+export const reconcileChildFibers = ChildReconciler(true, true);
 
-exports.reconcileChildFibersInPlace = ChildReconciler(false, true);
+export const reconcileChildFibersInPlace = ChildReconciler(false, true);
 
-exports.mountChildFibersInPlace = ChildReconciler(false, false);
+export const mountChildFibersInPlace = ChildReconciler(false, false);
 
-exports.cloneChildFibers = function(current : ?Fiber, workInProgress : Fiber) : void {
+export function cloneChildFibers(current : Fiber | null, workInProgress : Fiber) : void {
   if (!workInProgress.child) {
     return;
   }

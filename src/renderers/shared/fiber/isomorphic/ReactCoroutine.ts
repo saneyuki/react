@@ -16,11 +16,11 @@ import { ReactNodeList } from './ReactTypes';
 
 // The Symbol used to tag the special React types. If there is no native Symbol
 // nor polyfill, then a plain number is used for performance.
-var REACT_COROUTINE_TYPE =
+export const REACT_COROUTINE_TYPE =
   (typeof Symbol === 'function' && Symbol.for && Symbol.for('react.coroutine')) ||
   0xeac8;
 
-var REACT_YIELD_TYPE =
+export const REACT_YIELD_TYPE =
   (typeof Symbol === 'function' && Symbol.for && Symbol.for('react.yield')) ||
   0xeac9;
 
@@ -42,11 +42,11 @@ export type ReactYield = {
   continuation: mixed
 };
 
-exports.createCoroutine = function<T>(
+export function createCoroutine<T>(
   children : mixed,
   handler : CoroutineHandler<T>,
   props : T,
-  key : ?string = null
+  key : string | null = null
 ) : ReactCoroutine {
   var coroutine = {
     // This tag allow us to uniquely identify this as a React Coroutine
@@ -68,7 +68,7 @@ exports.createCoroutine = function<T>(
   return coroutine;
 };
 
-exports.createYield = function(props : mixed, continuation : mixed, key : ?string = null) {
+export function createYield(props : mixed, continuation : mixed, key : ?string = null) {
   var yieldNode = {
     // This tag allow us to uniquely identify this as a React Yield
     $$typeof: REACT_YIELD_TYPE,
@@ -91,7 +91,7 @@ exports.createYield = function(props : mixed, continuation : mixed, key : ?strin
 /**
  * Verifies the object is a coroutine object.
  */
-exports.isCoroutine = function(object : mixed) : boolean {
+export function isCoroutine(object : any): object is ReactCoroutine {
   return (
     typeof object === 'object' &&
     object !== null &&
@@ -102,13 +102,10 @@ exports.isCoroutine = function(object : mixed) : boolean {
 /**
  * Verifies the object is a yield object.
  */
-exports.isYield = function(object : mixed) : boolean {
+export function isYield(object : any): object is ReactYield {
   return (
     typeof object === 'object' &&
     object !== null &&
     object.$$typeof === REACT_YIELD_TYPE
   );
-};
-
-exports.REACT_YIELD_TYPE = REACT_YIELD_TYPE;
-exports.REACT_COROUTINE_TYPE = REACT_COROUTINE_TYPE;
+}

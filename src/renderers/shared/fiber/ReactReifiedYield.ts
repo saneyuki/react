@@ -13,13 +13,11 @@
 'use strict';
 
 import { ReactYield } from './isomorphic/ReactCoroutine';
-import { Fiber } from './ReactFiber';
-
-var { createFiberFromElementType } = require('./ReactFiber');
+import { Fiber, createFiberFromElementType } from './ReactFiber';
 
 export type ReifiedYield = { continuation: Fiber, props: Object };
 
-exports.createReifiedYield = function(yieldNode : ReactYield) : ReifiedYield {
+export function createReifiedYield(yieldNode : ReactYield) : ReifiedYield {
   var fiber = createFiberFromElementType(
     yieldNode.continuation,
     yieldNode.key
@@ -28,9 +26,9 @@ exports.createReifiedYield = function(yieldNode : ReactYield) : ReifiedYield {
     continuation: fiber,
     props: yieldNode.props,
   };
-};
+}
 
-exports.createUpdatedReifiedYield = function(previousYield : ReifiedYield, yieldNode : ReactYield) : ReifiedYield {
+export function createUpdatedReifiedYield(previousYield : ReifiedYield, yieldNode : ReactYield) : ReifiedYield {
   var fiber = previousYield.continuation;
   if (fiber.type !== yieldNode.continuation) {
     fiber = createFiberFromElementType(
@@ -42,4 +40,4 @@ exports.createUpdatedReifiedYield = function(previousYield : ReifiedYield, yield
     continuation: fiber,
     props: yieldNode.props,
   };
-};
+}
